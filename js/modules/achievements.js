@@ -713,7 +713,7 @@ window.Achievements = {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `lifemanager-achievements-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `VisionFin-achievements-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
         URL.revokeObjectURL(url);
         
@@ -826,13 +826,13 @@ if (Config.achievements && Config.achievements.definitions) {
         },
         'week_veteran': {
             title: 'Veterano de Uma Semana',
-            description: 'Usou o LifeManager por 7 dias',
+            description: 'Usou o Visionfin por 7 dias',
             icon: '📅',
             points: 30
         },
         'month_veteran': {
             title: 'Veterano de Um Mês',
-            description: 'Usou o LifeManager por 30 dias',
+            description: 'Usou o Visionfin por 30 dias',
             icon: '🗓️',
             points: 100
         },

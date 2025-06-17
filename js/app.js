@@ -1,5 +1,5 @@
 /**
- * LifeManager - Aplicação Principal
+ * LifeManager - Aplicação Principal Corrigida
  * Sistema de dados em memória e gerenciamento central
  */
 
@@ -21,16 +21,25 @@ let idCounters = {
 
 // Inicialização do sistema
 document.addEventListener('DOMContentLoaded', function() {
-    initializeSystem();
-    setupEventListeners();
-    setupDemoUser();
+    console.log('🚀 Inicializando LifeManager...');
+    
+    // Aguardar um pouco para garantir que tudo carregou
+    setTimeout(() => {
+        initializeSystem();
+        setupEventListeners();
+        setupDemoUser();
+        
+        // Forçar layout correto
+        document.body.style.opacity = '1';
+        console.log('✅ LifeManager inicializado com sucesso');
+    }, 100);
 });
 
 function initializeSystem() {
-    // Carregar dados salvos se existirem
-    const savedData = localStorage.getItem('lifemanager_data');
-    if (savedData) {
-        try {
+    try {
+        // Carregar dados salvos se existirem
+        const savedData = localStorage.getItem('lifemanager_data');
+        if (savedData) {
             const data = JSON.parse(savedData);
             users = data.users || {};
             if (data.currentUser && users[data.currentUser.email]) {
@@ -39,9 +48,9 @@ function initializeSystem() {
                 idCounters = data.idCounters || idCounters;
                 showApp();
             }
-        } catch (e) {
-            console.log('Erro ao carregar dados salvos');
         }
+    } catch (e) {
+        console.log('Erro ao carregar dados salvos:', e);
     }
 }
 
@@ -57,30 +66,121 @@ function setupDemoUser() {
     };
     
     // Pré-preencher campos de login com demo
-    document.getElementById('loginEmail').value = demoEmail;
-    document.getElementById('loginPassword').value = 'demo123';
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    if (loginEmail) loginEmail.value = demoEmail;
+    if (loginPassword) loginPassword.value = 'demo123';
 }
 
 function setupEventListeners() {
+    console.log('🔧 Configurando event listeners...');
+    
+    // Event listeners de formulários
+    setupFormListeners();
+    
+    // Event listeners de navegação
+    setupNavigationListeners();
+    
+    // Event listeners de modais
+    setupModalListeners();
+    
+    // Atalhos de teclado
+    setupKeyboardShortcuts();
+    
+    // Auto-save
+    setInterval(saveData, 30000);
+}
+
+function setupFormListeners() {
     // Formulário de login
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('registerForm').addEventListener('submit', handleRegister);
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
     
-    // Formulários principais
-    document.getElementById('taskForm').addEventListener('submit', handleTaskSubmit);
-    document.getElementById('incomeForm').addEventListener('submit', handleIncomeSubmit);
-    document.getElementById('expenseForm').addEventListener('submit', handleExpenseSubmit);
-    document.getElementById('goalForm').addEventListener('submit', handleGoalSubmit);
-    document.getElementById('inviteForm').addEventListener('submit', handleInviteSubmit);
+    // Formulário de registro
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
     
+    // Aguardar modals serem criados para adicionar listeners
+    document.addEventListener('modalCreated', setupModalFormListeners);
+}
+
+function setupModalFormListeners() {
+    // Task form
+    const taskForm = document.getElementById('taskForm');
+    if (taskForm && !taskForm.dataset.listenerAdded) {
+        taskForm.addEventListener('submit', handleTaskSubmit);
+        taskForm.dataset.listenerAdded = 'true';
+    }
+    
+    // Income form
+    const incomeForm = document.getElementById('incomeForm');
+    if (incomeForm && !incomeForm.dataset.listenerAdded) {
+        incomeForm.addEventListener('submit', handleIncomeSubmit);
+        incomeForm.dataset.listenerAdded = 'true';
+    }
+    
+    // Expense form
+    const expenseForm = document.getElementById('expenseForm');
+    if (expenseForm && !expenseForm.dataset.listenerAdded) {
+        expenseForm.addEventListener('submit', handleExpenseSubmit);
+        expenseForm.dataset.listenerAdded = 'true';
+    }
+    
+    // Goal form
+    const goalForm = document.getElementById('goalForm');
+    if (goalForm && !goalForm.dataset.listenerAdded) {
+        goalForm.addEventListener('submit', handleGoalSubmit);
+        goalForm.dataset.listenerAdded = 'true';
+    }
+    
+    // Invite form
+    const inviteForm = document.getElementById('inviteForm');
+    if (inviteForm && !inviteForm.dataset.listenerAdded) {
+        inviteForm.addEventListener('submit', handleInviteSubmit);
+        inviteForm.dataset.listenerAdded = 'true';
+    }
+}
+
+function setupNavigationListeners() {
+    // Navegação entre abas
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const onclick = this.getAttribute('onclick');
+            if (onclick && onclick.includes('switchTab')) {
+                const tabName = onclick.match(/switchTab\('(.+?)'\)/)?.[1];
+                if (tabName) {
+                    switchTab(tabName);
+                }
+            }
+        });
+    });
+}
+
+function setupModalListeners() {
     // Fechar modais clicando fora
-    window.addEventListener('click', function(event) {
+    document.addEventListener('click', function(event) {
         if (event.target.classList.contains('modal')) {
             event.target.style.display = 'none';
         }
     });
     
-    // Atalhos de teclado
+    // Fechar modais com botão X
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('close')) {
+            const modal = event.target.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+    });
+}
+
+function setupKeyboardShortcuts() {
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             document.querySelectorAll('.modal').forEach(modal => {
@@ -105,20 +205,9 @@ function setupEventListeners() {
             }
         }
     });
-    
-    // Auto-save a cada 30 segundos
-    setInterval(saveData, 30000);
 }
 
-// Autenticação
-function switchAuthTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-    
-    event.target.classList.add('active');
-    document.getElementById(tab + 'Form').classList.add('active');
-}
-
+// Funções de Autenticação
 function handleLogin(e) {
     e.preventDefault();
     
@@ -217,23 +306,20 @@ function showApp() {
     document.getElementById('appSection').style.display = 'block';
     
     updateUserInterface();
-    loadAllData();
-    updateDashboard();
-    saveData();
     
-    // Adicionar funcionalidades extras
-    setTimeout(() => {
-        addBackupButtons();
-        showDailyTip();
-    }, 1000);
+    // Aguardar um frame antes de carregar dados para evitar problemas de layout
+    requestAnimationFrame(() => {
+        loadAllData();
+        updateDashboard();
+        createModals(); // Criar modals depois que a interface estiver pronta
+        saveData();
+    });
 }
 
 function updateUserInterface() {
     document.getElementById('userName').textContent = currentUser.name;
     document.getElementById('userEmail').textContent = currentUser.email;
     document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
-    document.getElementById('mainUserAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
-    document.getElementById('mainUserName').textContent = currentUser.name;
     
     const planText = currentUser.plan === 'pro' ? 'Pro' : 'Grátis';
     document.getElementById('userPlan').textContent = planText;
@@ -256,8 +342,11 @@ function logout() {
     }
 }
 
-// Navegação entre abas
+// Navegação entre abas - CORRIGIDA
 function switchTab(tabName) {
+    console.log(`🎯 Navegando para: ${tabName}`);
+    
+    // Remover classes ativas
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -265,30 +354,249 @@ function switchTab(tabName) {
         btn.classList.remove('active');
     });
 
-    document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
+    // Ativar nova aba
+    const tabContent = document.getElementById(tabName);
+    const tabBtn = document.querySelector(`[onclick*="switchTab('${tabName}')"]`);
+    
+    if (tabContent && tabBtn) {
+        tabContent.classList.add('active');
+        tabBtn.classList.add('active');
+        
+        // Carregar conteúdo específico da aba
+        loadTabContent(tabName);
+    }
 }
 
-// Sistema de modais
-function openModal(modalId) {
-    document.getElementById(modalId).style.display = 'block';
+function loadTabContent(tabName) {
+    switch(tabName) {
+        case 'dashboard':
+            updateDashboard();
+            break;
+        case 'tasks':
+            renderAllTasks();
+            break;
+        case 'finances':
+            updateFinancialDisplay();
+            break;
+        case 'goals':
+            renderAllGoals();
+            break;
+        case 'team':
+            loadTeamMembers();
+            break;
+    }
+}
+
+// Sistema de modais - CORRIGIDO
+function createModals() {
+    const modalsContainer = document.getElementById('modalsContainer') || document.body;
     
-    // Focar no primeiro input
-    setTimeout(() => {
-        const firstInput = document.querySelector(`#${modalId} input`);
-        if (firstInput) firstInput.focus();
-    }, 100);
+    const modalsHTML = `
+        <!-- Task Modal -->
+        <div id="taskModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Nova Tarefa</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Título</label>
+                        <input type="text" id="taskTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Descrição</label>
+                        <textarea id="taskDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPriority">Prioridade</label>
+                        <select id="taskPriority">
+                            <option value="low">🟢 Baixa</option>
+                            <option value="medium" selected>🟡 Média</option>
+                            <option value="high">🔴 Alta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDeadline">Prazo</label>
+                        <input type="date" id="taskDeadline">
+                    </div>
+                    <button type="submit" class="btn">Criar Tarefa</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Income Modal -->
+        <div id="incomeModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Nova Receita</h2>
+                <form id="incomeForm">
+                    <div class="form-group">
+                        <label for="incomeDescription">Descrição</label>
+                        <input type="text" id="incomeDescription" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="incomeAmount">Valor (R$)</label>
+                        <input type="number" id="incomeAmount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="incomeCategory">Categoria</label>
+                        <select id="incomeCategory">
+                            <option value="salary">💼 Salário</option>
+                            <option value="freelance">💻 Freelance</option>
+                            <option value="business">🏢 Negócio</option>
+                            <option value="investment">📈 Investimento</option>
+                            <option value="other">📦 Outros</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Adicionar Receita</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Expense Modal -->
+        <div id="expenseModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Novo Gasto</h2>
+                <form id="expenseForm">
+                    <div class="form-group">
+                        <label for="expenseDescription">Descrição</label>
+                        <input type="text" id="expenseDescription" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseAmount">Valor (R$)</label>
+                        <input type="number" id="expenseAmount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseCategory">Categoria</label>
+                        <select id="expenseCategory">
+                            <option value="food">🍔 Alimentação</option>
+                            <option value="transport">🚗 Transporte</option>
+                            <option value="housing">🏠 Moradia</option>
+                            <option value="health">🏥 Saúde</option>
+                            <option value="entertainment">🎬 Lazer</option>
+                            <option value="education">📚 Educação</option>
+                            <option value="shopping">🛍️ Compras</option>
+                            <option value="bills">📄 Contas</option>
+                            <option value="other">📦 Outros</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Adicionar Gasto</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Goal Modal -->
+        <div id="goalModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Nova Meta</h2>
+                <form id="goalForm">
+                    <div class="form-group">
+                        <label for="goalName">Nome da Meta</label>
+                        <input type="text" id="goalName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="goalType">Tipo</label>
+                        <select id="goalType" onchange="toggleGoalFields()">
+                            <option value="financial">💰 Financeira</option>
+                            <option value="personal">🎯 Pessoal</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="goalAmountGroup">
+                        <label for="goalAmount">Valor Objetivo (R$)</label>
+                        <input type="number" id="goalAmount" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="goalDeadline">Prazo</label>
+                        <input type="date" id="goalDeadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="goalDescription">Descrição</label>
+                        <textarea id="goalDescription" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Criar Meta</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Invite Modal -->
+        <div id="inviteModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Convidar Membro</h2>
+                <form id="inviteForm">
+                    <div class="form-group">
+                        <label for="inviteEmail">Email</label>
+                        <input type="email" id="inviteEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteRole">Função</label>
+                        <select id="inviteRole">
+                            <option value="member">👤 Membro</option>
+                            <option value="admin">⚡ Administrador</option>
+                            <option value="viewer">👁️ Visualizador</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteMessage">Mensagem (opcional)</label>
+                        <textarea id="inviteMessage" rows="3" placeholder="Convite para colaborar..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">Enviar Convite</button>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    // Remover modals existentes
+    document.querySelectorAll('.modal').forEach(modal => modal.remove());
+    
+    // Adicionar novos modals
+    modalsContainer.insertAdjacentHTML('beforeend', modalsHTML);
+    
+    // Disparar evento para configurar listeners
+    document.dispatchEvent(new CustomEvent('modalCreated'));
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+        
+        // Focar no primeiro input
+        setTimeout(() => {
+            const firstInput = modal.querySelector('input, textarea, select');
+            if (firstInput) firstInput.focus();
+        }, 100);
+    }
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-    
-    // Limpar formulários
-    const form = document.querySelector(`#${modalId} form`);
-    if (form) form.reset();
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        
+        // Limpar formulário
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+    }
 }
 
-// Sistema de Tarefas
+// Função para alternar campos de meta
+function toggleGoalFields() {
+    const type = document.getElementById('goalType').value;
+    const amountGroup = document.getElementById('goalAmountGroup');
+    const amountInput = document.getElementById('goalAmount');
+    
+    if (type === 'financial') {
+        amountGroup.style.display = 'block';
+        amountInput.required = true;
+    } else {
+        amountGroup.style.display = 'none';
+        amountInput.required = false;
+    }
+}
+
+// Handlers de formulários - CORRIGIDOS
 function handleTaskSubmit(e) {
     e.preventDefault();
     
@@ -312,142 +620,6 @@ function handleTaskSubmit(e) {
     showNotification('Tarefa criada com sucesso! 📋');
 }
 
-function addTaskToBoard(task) {
-    const card = createTaskCard(task);
-    const column = document.getElementById(`${task.status}-column`);
-    column.appendChild(card);
-}
-
-function createTaskCard(task) {
-    const card = document.createElement('div');
-    card.className = 'task-card';
-    card.id = `task-${task.id}`;
-    card.draggable = true;
-    card.ondragstart = dragStart;
-    
-    const deadlineText = task.deadline ? 
-        `<div style="font-size: 0.8em; color: #666; margin-top: 8px;">📅 ${formatDate(task.deadline)}</div>` : '';
-    
-    card.innerHTML = `
-        <div class="task-title">${task.title}</div>
-        <div class="task-description">${task.description}</div>
-        ${deadlineText}
-        <div class="task-meta">
-            <div class="task-priority priority-${task.priority}">${getPriorityText(task.priority)}</div>
-        </div>
-        <div class="task-actions">
-            <button class="task-btn btn-edit" onclick="editTask(${task.id})">✏️</button>
-            <button class="task-btn btn-delete" onclick="deleteTask(${task.id})">🗑️</button>
-        </div>
-    `;
-    
-    return card;
-}
-
-function getPriorityText(priority) {
-    const map = { high: '🔴 Alta', medium: '🟡 Média', low: '🟢 Baixa' };
-    return map[priority] || '🟡 Média';
-}
-
-// Drag and Drop para tarefas
-function allowDrop(ev) {
-    ev.preventDefault();
-}
-
-function dragStart(ev) {
-    ev.dataTransfer.setData("text", ev.target.id);
-    ev.target.classList.add('dragging');
-}
-
-function drop(ev) {
-    ev.preventDefault();
-    const data = ev.dataTransfer.getData("text");
-    const draggedElement = document.getElementById(data);
-    
-    if (!draggedElement) return;
-    
-    const targetColumn = ev.target.closest('.column-content');
-    if (targetColumn && draggedElement) {
-        targetColumn.appendChild(draggedElement);
-        
-        // Atualizar status da tarefa
-        const taskId = parseInt(data.replace('task-', ''));
-        const newStatus = targetColumn.id.replace('-column', '');
-        
-        const task = userData.tasks.find(t => t.id === taskId);
-        if (task) {
-            task.status = newStatus;
-            
-            // Celebração quando completar tarefa
-            if (newStatus === 'done') {
-                showCelebration('🎉');
-                showNotification('Tarefa concluída! Parabéns! 🎉');
-            }
-            
-            updateDashboard();
-            saveData();
-        }
-    }
-    
-    draggedElement.classList.remove('dragging');
-}
-
-function editTask(taskId) {
-    const task = userData.tasks.find(t => t.id === taskId);
-    if (!task) return;
-    
-    document.getElementById('taskTitle').value = task.title;
-    document.getElementById('taskDescription').value = task.description;
-    document.getElementById('taskPriority').value = task.priority;
-    document.getElementById('taskDeadline').value = task.deadline;
-    
-    // Mudar para modo edição
-    const modal = document.getElementById('taskModal');
-    const form = document.getElementById('taskForm');
-    const submitBtn = form.querySelector('button[type="submit"]');
-    
-    submitBtn.textContent = 'Atualizar Tarefa';
-    
-    const originalSubmit = form.onsubmit;
-    form.onsubmit = function(e) {
-        e.preventDefault();
-        
-        task.title = document.getElementById('taskTitle').value.trim();
-        task.description = document.getElementById('taskDescription').value.trim();
-        task.priority = document.getElementById('taskPriority').value;
-        task.deadline = document.getElementById('taskDeadline').value;
-        
-        // Atualizar card visual
-        const card = document.getElementById(`task-${taskId}`);
-        if (card) {
-            card.remove();
-            addTaskToBoard(task);
-        }
-        
-        updateDashboard();
-        saveData();
-        closeModal('taskModal');
-        showNotification('Tarefa atualizada! ✏️');
-        
-        // Restaurar formulário
-        submitBtn.textContent = 'Criar Tarefa';
-        form.onsubmit = originalSubmit;
-    };
-    
-    openModal('taskModal');
-}
-
-function deleteTask(taskId) {
-    if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-        userData.tasks = userData.tasks.filter(t => t.id !== taskId);
-        document.getElementById(`task-${taskId}`).remove();
-        updateDashboard();
-        saveData();
-        showNotification('Tarefa excluída!');
-    }
-}
-
-// Sistema Financeiro
 function handleIncomeSubmit(e) {
     e.preventDefault();
     
@@ -494,8 +666,446 @@ function handleExpenseSubmit(e) {
     showNotification(`Gasto de R$ ${transaction.amount.toFixed(2)} registrado! 💸`);
 }
 
+function handleGoalSubmit(e) {
+    e.preventDefault();
+    
+    const goal = {
+        id: idCounters.goal++,
+        name: document.getElementById('goalName').value.trim(),
+        type: document.getElementById('goalType').value,
+        amount: document.getElementById('goalType').value === 'financial' ? 
+            parseFloat(document.getElementById('goalAmount').value) : null,
+        deadline: document.getElementById('goalDeadline').value,
+        description: document.getElementById('goalDescription').value.trim(),
+        currentAmount: 0,
+        progress: 0,
+        createdAt: new Date().toISOString(),
+        userId: currentUser.email
+    };
+    
+    userData.goals.push(goal);
+    addGoalToList(goal);
+    updateDashboard();
+    saveData();
+    
+    closeModal('goalModal');
+    showNotification('Meta criada! Vamos alcançá-la! 🎯');
+}
+
+function handleInviteSubmit(e) {
+    e.preventDefault();
+    
+    const invite = {
+        id: idCounters.invite++,
+        email: document.getElementById('inviteEmail').value.toLowerCase().trim(),
+        role: document.getElementById('inviteRole').value,
+        message: document.getElementById('inviteMessage').value.trim(),
+        invitedBy: currentUser.email,
+        invitedAt: new Date().toISOString(),
+        status: 'pending'
+    };
+    
+    // Simular envio de convite
+    userData.teamMembers.push({
+        email: invite.email,
+        role: invite.role,
+        joinedAt: new Date().toISOString(),
+        status: 'active'
+    });
+    
+    loadTeamMembers();
+    closeModal('inviteModal');
+    showNotification(`Convite enviado para ${invite.email}! 📧`);
+    saveData();
+}
+
+// Sistema de Tarefas - CORRIGIDO
+function addTaskToBoard(task) {
+    const card = createTaskCard(task);
+    const column = document.getElementById(`${task.status}-column`);
+    if (column) {
+        column.appendChild(card);
+    }
+}
+
+function createTaskCard(task) {
+    const card = document.createElement('div');
+    card.className = 'task-card';
+    card.id = `task-${task.id}`;
+    card.draggable = true;
+    card.ondragstart = dragStart;
+    
+    const deadlineText = task.deadline ? 
+        `<div style="font-size: 0.8em; color: #666; margin-top: 8px;">📅 ${formatDate(task.deadline)}</div>` : '';
+    
+    // Criar botões de status baseado no status atual
+    const statusButtons = createStatusButtons(task);
+    
+    card.innerHTML = `
+        <div class="task-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="task-priority priority-${task.priority}">${getPriorityText(task.priority)}</div>
+            <div class="task-status-indicator" style="
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-size: 0.7em;
+                font-weight: 700;
+                text-transform: uppercase;
+                background: ${getStatusColor(task.status)};
+                color: white;
+            ">${getStatusText(task.status)}</div>
+        </div>
+        
+        <div class="task-title">${task.title}</div>
+        <div class="task-description">${task.description}</div>
+        ${deadlineText}
+        
+        <div class="task-status-controls" style="margin: 16px 0;">
+            ${statusButtons}
+        </div>
+        
+        <div class="task-actions" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="task-drag-hint" style="font-size: 0.7em; color: #999; display: flex; align-items: center; gap: 4px;">
+                <span>⇄</span> Arraste para mover
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button class="task-btn btn-edit" onclick="editTask(${task.id})" title="Editar tarefa">✏️</button>
+                <button class="task-btn btn-delete" onclick="deleteTask(${task.id})" title="Excluir tarefa">🗑️</button>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function createStatusButtons(task) {
+    const statusConfig = {
+        todo: {
+            next: 'progress',
+            nextText: '▶️ Iniciar',
+            nextColor: 'linear-gradient(135deg, #4ecdc4, #44a08d)'
+        },
+        progress: {
+            prev: 'todo',
+            prevText: '◀️ Voltar',
+            prevColor: 'linear-gradient(135deg, #ff6b6b, #ee5a52)',
+            next: 'done',
+            nextText: '✅ Concluir',
+            nextColor: 'linear-gradient(135deg, #45b7d1, #96c93d)'
+        },
+        done: {
+            prev: 'progress',
+            prevText: '◀️ Reabrir',
+            prevColor: 'linear-gradient(135deg, #4ecdc4, #44a08d)'
+        }
+    };
+    
+    const config = statusConfig[task.status];
+    let buttons = '';
+    
+    if (config.prev) {
+        buttons += `
+            <button class="status-btn" onclick="changeTaskStatus(${task.id}, '${config.prev}')" style="
+                background: ${config.prevColor};
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.8em;
+                font-weight: 600;
+                cursor: pointer;
+                margin-right: 8px;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                ${config.prevText}
+            </button>
+        `;
+    }
+    
+    if (config.next) {
+        buttons += `
+            <button class="status-btn" onclick="changeTaskStatus(${task.id}, '${config.next}')" style="
+                background: ${config.nextColor};
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.8em;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+                ${config.nextText}
+            </button>
+        `;
+    }
+    
+    return `<div style="display: flex; align-items: center;">${buttons}</div>`;
+}
+
+function getStatusColor(status) {
+    const colors = {
+        todo: 'linear-gradient(135deg, #ff6b6b, #ee5a52)',
+        progress: 'linear-gradient(135deg, #4ecdc4, #44a08d)',
+        done: 'linear-gradient(135deg, #45b7d1, #96c93d)'
+    };
+    return colors[status] || colors.todo;
+}
+
+function getStatusText(status) {
+    const texts = {
+        todo: 'A Fazer',
+        progress: 'Fazendo',
+        done: 'Concluído'
+    };
+    return texts[status] || 'A Fazer';
+}
+
+function changeTaskStatus(taskId, newStatus) {
+    const task = userData.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const oldStatus = task.status;
+    task.status = newStatus;
+    
+    // Mover card visualmente
+    const card = document.getElementById(`task-${taskId}`);
+    if (card) {
+        // Remover da coluna atual
+        card.remove();
+        
+        // Recriar e adicionar na nova coluna
+        const newCard = createTaskCard(task);
+        const targetColumn = document.getElementById(`${newStatus}-column`);
+        if (targetColumn) {
+            targetColumn.appendChild(newCard);
+        }
+    }
+    
+    // Efeitos especiais
+    if (newStatus === 'done' && oldStatus !== 'done') {
+        showCelebration('🎉');
+        showNotification('Tarefa concluída! Parabéns! 🎉');
+        task.completedAt = new Date().toISOString();
+    } else if (newStatus === 'progress' && oldStatus === 'todo') {
+        showNotification('Tarefa iniciada! Vamos lá! 💪', 'success');
+        task.startedAt = new Date().toISOString();
+    } else if (newStatus === 'todo' && oldStatus !== 'todo') {
+        showNotification('Tarefa reaberta! 🔄', 'success');
+    }
+    
+    updateDashboard();
+    saveData();
+}
+
+function renderAllTasks() {
+    // Limpar colunas
+    ['todo', 'progress', 'done'].forEach(status => {
+        const column = document.getElementById(`${status}-column`);
+        if (column) column.innerHTML = '';
+    });
+    
+    // Renderizar todas as tarefas
+    userData.tasks.forEach(task => {
+        addTaskToBoard(task);
+    });
+}
+
+function getPriorityText(priority) {
+    const map = { high: '🔴 Alta', medium: '🟡 Média', low: '🟢 Baixa' };
+    return map[priority] || '🟡 Média';
+}
+
+// Drag and Drop para tarefas - MELHORADO
+function dragStart(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+    ev.target.classList.add('dragging');
+    
+    // Destacar todas as colunas como possíveis destinos
+    document.querySelectorAll('.kanban-column').forEach(column => {
+        column.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
+        column.style.borderColor = '#667eea';
+        column.style.borderStyle = 'dashed';
+    });
+    
+    // Adicionar indicador visual
+    const indicator = document.createElement('div');
+    indicator.id = 'drop-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+        z-index: 1000;
+        animation: pulse 1s infinite;
+    `;
+    indicator.textContent = '📋 Arraste para a coluna desejada';
+    document.body.appendChild(indicator);
+}
+
+function dragEnd(ev) {
+    ev.target.classList.remove('dragging');
+    
+    // Remover destaque das colunas
+    document.querySelectorAll('.kanban-column').forEach(column => {
+        column.style.backgroundColor = '';
+        column.style.borderColor = '';
+        column.style.borderStyle = '';
+    });
+    
+    // Remover indicador
+    const indicator = document.getElementById('drop-indicator');
+    if (indicator) indicator.remove();
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+    
+    // Destacar a coluna específica quando hover
+    const column = ev.target.closest('.kanban-column');
+    if (column) {
+        column.style.backgroundColor = 'rgba(102, 126, 234, 0.2)';
+        column.style.transform = 'scale(1.02)';
+    }
+}
+
+function dragLeave(ev) {
+    const column = ev.target.closest('.kanban-column');
+    if (column) {
+        column.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
+        column.style.transform = 'scale(1)';
+    }
+}
+
+function drop(ev) {
+    ev.preventDefault();
+    const data = ev.dataTransfer.getData("text");
+    const draggedElement = document.getElementById(data);
+    
+    if (!draggedElement) return;
+    
+    // Encontrar a coluna de destino
+    let targetColumn = ev.target;
+    while (targetColumn && !targetColumn.id.includes('-column')) {
+        targetColumn = targetColumn.parentElement;
+    }
+    
+    if (targetColumn && draggedElement) {
+        // Adicionar elemento à nova coluna
+        targetColumn.appendChild(draggedElement);
+        
+        // Atualizar status da tarefa
+        const taskId = parseInt(data.replace('task-', ''));
+        const newStatus = targetColumn.id.replace('-column', '');
+        
+        const task = userData.tasks.find(t => t.id === taskId);
+        if (task && task.status !== newStatus) {
+            const oldStatus = task.status;
+            task.status = newStatus;
+            
+            // Recriar o card com os novos botões de status
+            draggedElement.remove();
+            const newCard = createTaskCard(task);
+            targetColumn.appendChild(newCard);
+            
+            // Efeitos e notificações
+            if (newStatus === 'done' && oldStatus !== 'done') {
+                showCelebration('🎉');
+                showNotification('Tarefa concluída! Parabéns! 🎉');
+                task.completedAt = new Date().toISOString();
+            } else if (newStatus === 'progress' && oldStatus === 'todo') {
+                showNotification('Tarefa iniciada! Vamos lá! 💪');
+                task.startedAt = new Date().toISOString();
+            } else if (newStatus === 'todo' && oldStatus !== 'todo') {
+                showNotification('Tarefa reaberta! 🔄');
+            }
+            
+            updateDashboard();
+            saveData();
+        }
+    }
+    
+    // Limpar efeitos visuais
+    dragEnd({ target: draggedElement });
+}
+
+// Funções de edição - CORRIGIDAS
+function editTask(taskId) {
+    const task = userData.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    // Preencher formulário
+    document.getElementById('taskTitle').value = task.title;
+    document.getElementById('taskDescription').value = task.description;
+    document.getElementById('taskPriority').value = task.priority;
+    document.getElementById('taskDeadline').value = task.deadline;
+    
+    // Abrir modal
+    openModal('taskModal');
+    
+    // Configurar para modo edição
+    const form = document.getElementById('taskForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    
+    submitBtn.textContent = 'Atualizar Tarefa';
+    
+    // Substituir o handler do form temporariamente
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    newForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Atualizar task
+        task.title = document.getElementById('taskTitle').value.trim();
+        task.description = document.getElementById('taskDescription').value.trim();
+        task.priority = document.getElementById('taskPriority').value;
+        task.deadline = document.getElementById('taskDeadline').value;
+        
+        // Atualizar card visual
+        const card = document.getElementById(`task-${taskId}`);
+        if (card) {
+            card.remove();
+            addTaskToBoard(task);
+        }
+        
+        updateDashboard();
+        saveData();
+        closeModal('taskModal');
+        showNotification('Tarefa atualizada! ✏️');
+        
+        // Restaurar formulário original
+        const originalForm = document.getElementById('taskForm');
+        if (originalForm) {
+            const newOriginalForm = originalForm.cloneNode(true);
+            originalForm.parentNode.replaceChild(newOriginalForm, originalForm);
+            newOriginalForm.addEventListener('submit', handleTaskSubmit);
+            newOriginalForm.querySelector('button[type="submit"]').textContent = originalText;
+        }
+    });
+}
+
+function deleteTask(taskId) {
+    if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+        userData.tasks = userData.tasks.filter(t => t.id !== taskId);
+        const taskElement = document.getElementById(`task-${taskId}`);
+        if (taskElement) taskElement.remove();
+        updateDashboard();
+        saveData();
+        showNotification('Tarefa excluída!');
+    }
+}
+
+// Sistema Financeiro - CORRIGIDO
 function addTransactionToList(transaction) {
     const list = document.getElementById('transactionsList');
+    if (!list) return;
     
     // Remover mensagem de lista vazia se existir
     const emptyMessage = list.querySelector('div[style*="text-align: center"]');
@@ -536,53 +1146,20 @@ function updateFinancialDisplay() {
     
     const balance = income - expenses;
     
-    document.getElementById('mainBalance').textContent = `R$ ${balance.toFixed(2)}`;
-    document.getElementById('totalIncome').textContent = `R$ ${income.toFixed(2)}`;
-    document.getElementById('totalExpenses').textContent = `R$ ${expenses.toFixed(2)}`;
+    // Atualizar elementos se existirem
+    const mainBalance = document.getElementById('mainBalance');
+    const totalIncome = document.getElementById('totalIncome');
+    const totalExpenses = document.getElementById('totalExpenses');
+    
+    if (mainBalance) mainBalance.textContent = `R$ ${balance.toFixed(2)}`;
+    if (totalIncome) totalIncome.textContent = `R$ ${income.toFixed(2)}`;
+    if (totalExpenses) totalExpenses.textContent = `R$ ${expenses.toFixed(2)}`;
 }
 
-// Sistema de Metas
-function toggleGoalFields() {
-    const type = document.getElementById('goalType').value;
-    const amountGroup = document.getElementById('goalAmountGroup');
-    
-    if (type === 'financial') {
-        amountGroup.style.display = 'block';
-        document.getElementById('goalAmount').required = true;
-    } else {
-        amountGroup.style.display = 'none';
-        document.getElementById('goalAmount').required = false;
-    }
-}
-
-function handleGoalSubmit(e) {
-    e.preventDefault();
-    
-    const goal = {
-        id: idCounters.goal++,
-        name: document.getElementById('goalName').value.trim(),
-        type: document.getElementById('goalType').value,
-        amount: document.getElementById('goalType').value === 'financial' ? 
-            parseFloat(document.getElementById('goalAmount').value) : null,
-        deadline: document.getElementById('goalDeadline').value,
-        description: document.getElementById('goalDescription').value.trim(),
-        currentAmount: 0,
-        progress: 0,
-        createdAt: new Date().toISOString(),
-        userId: currentUser.email
-    };
-    
-    userData.goals.push(goal);
-    addGoalToList(goal);
-    updateDashboard();
-    saveData();
-    
-    closeModal('goalModal');
-    showNotification('Meta criada! Vamos alcançá-la! 🎯');
-}
-
+// Sistema de Metas - CORRIGIDO
 function addGoalToList(goal) {
     const list = document.getElementById('goalsList');
+    if (!list) return;
     
     // Remover mensagem de lista vazia
     const emptyMessage = list.querySelector('div[style*="text-align: center"]');
@@ -646,6 +1223,26 @@ function addGoalToList(goal) {
     list.appendChild(item);
 }
 
+function renderAllGoals() {
+    const list = document.getElementById('goalsList');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    
+    if (userData.goals.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; padding: 60px; color: #666;">
+                <div style="font-size: 4em; margin-bottom: 24px;">🎯</div>
+                <h3 style="color: #333; margin-bottom: 12px;">Defina suas metas!</h3>
+                <p style="margin-bottom: 24px;">Transforme seus sonhos em objetivos concretos</p>
+                <button class="btn" onclick="openModal('goalModal')">Criar Primeira Meta</button>
+            </div>
+        `;
+    } else {
+        userData.goals.forEach(goal => addGoalToList(goal));
+    }
+}
+
 function updateGoalProgress(goalId) {
     const goal = userData.goals.find(g => g.id === goalId);
     if (!goal) return;
@@ -682,8 +1279,7 @@ function updateGoalProgress(goalId) {
     }
     
     // Recarregar lista de metas
-    document.getElementById('goalsList').innerHTML = '';
-    userData.goals.forEach(addGoalToList);
+    renderAllGoals();
     updateDashboard();
     saveData();
 }
@@ -691,59 +1287,38 @@ function updateGoalProgress(goalId) {
 function deleteGoal(goalId) {
     if (confirm('Tem certeza que deseja excluir esta meta?')) {
         userData.goals = userData.goals.filter(g => g.id !== goalId);
-        
-        // Recarregar lista
-        document.getElementById('goalsList').innerHTML = '';
-        if (userData.goals.length === 0) {
-            document.getElementById('goalsList').innerHTML = `
-                <div style="text-align: center; padding: 60px; color: #666;">
-                    <div style="font-size: 4em; margin-bottom: 24px;">🎯</div>
-                    <h3 style="color: #333; margin-bottom: 12px;">Defina suas metas!</h3>
-                    <p style="margin-bottom: 24px;">Transforme seus sonhos em objetivos concretos</p>
-                    <button class="btn" onclick="openModal('goalModal')">Criar Primeira Meta</button>
-                </div>
-            `;
-        } else {
-            userData.goals.forEach(addGoalToList);
-        }
-        
+        renderAllGoals();
         updateDashboard();
         saveData();
         showNotification('Meta excluída!');
     }
 }
 
-// Sistema de Equipe
-function handleInviteSubmit(e) {
-    e.preventDefault();
-    
-    const invite = {
-        id: idCounters.invite++,
-        email: document.getElementById('inviteEmail').value.toLowerCase().trim(),
-        role: document.getElementById('inviteRole').value,
-        message: document.getElementById('inviteMessage').value.trim(),
-        invitedBy: currentUser.email,
-        invitedAt: new Date().toISOString(),
-        status: 'pending'
-    };
-    
-    // Simular envio de convite (em produção seria email real)
-    userData.teamMembers.push({
-        email: invite.email,
-        role: invite.role,
-        joinedAt: new Date().toISOString(),
-        status: 'active'
-    });
-    
-    loadTeamMembers();
-    closeModal('inviteModal');
-    showNotification(`Convite enviado para ${invite.email}! 📧`);
-    saveData();
-}
-
+// Sistema de Equipe - CORRIGIDO
 function loadTeamMembers() {
     const container = document.getElementById('teamMembers');
+    if (!container) return;
+    
     container.innerHTML = '';
+    
+    if (userData.teamMembers.length === 0) {
+        container.innerHTML = `
+            <div onclick="openModal('inviteModal')" style="
+                background: rgba(255,255,255,0.7); 
+                border: 2px dashed #ccc; 
+                border-radius: 16px; 
+                padding: 40px; 
+                text-align: center; 
+                cursor: pointer;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.borderColor='#667eea'; this.style.background='rgba(255,255,255,0.9)'" onmouseout="this.style.borderColor='#ccc'; this.style.background='rgba(255,255,255,0.7)'">
+                <div style="font-size: 3em; margin-bottom: 16px; color: #ccc;">➕</div>
+                <h4 style="color: #666; margin-bottom: 8px;">Convide sua primeira pessoa</h4>
+                <p style="color: #999; font-size: 0.9em;">Colabore em equipe para alcançar metas juntos</p>
+            </div>
+        `;
+        return;
+    }
     
     userData.teamMembers.forEach(member => {
         const memberDiv = document.createElement('div');
@@ -784,7 +1359,7 @@ function loadTeamMembers() {
     });
 }
 
-// Dashboard e Estatísticas
+// Dashboard e Estatísticas - CORRIGIDO
 function updateDashboard() {
     const activeTasks = userData.tasks.filter(t => t.status !== 'done').length;
     const completedGoals = userData.goals.filter(g => {
@@ -818,23 +1393,24 @@ function updateDashboard() {
     
     const weekScore = Math.min(weekTasks * 10, 100);
     
-    // Atualizar interface
-    document.getElementById('activeTasks').textContent = activeTasks;
-    document.getElementById('currentBalance').textContent = `R$ ${Math.abs(balance).toFixed(0)}`;
-    document.getElementById('goalsProgress').textContent = `${goalsProgress.toFixed(0)}%`;
-    document.getElementById('weekScore').textContent = weekScore;
+    // Atualizar interface - verificar se elementos existem
+    const activeTasksEl = document.getElementById('activeTasks');
+    const currentBalanceEl = document.getElementById('currentBalance');
+    const goalsProgressEl = document.getElementById('goalsProgress');
+    const weekScoreEl = document.getElementById('weekScore');
     
-    // Atualizar cor do saldo
-    const balanceCard = document.getElementById('currentBalance').closest('.dashboard-card');
-    if (balance < 0) {
-        balanceCard.querySelector('.card-icon').style.background = 'linear-gradient(135deg, #f44336, #ef5350)';
-    }
+    if (activeTasksEl) activeTasksEl.textContent = activeTasks;
+    if (currentBalanceEl) currentBalanceEl.textContent = `R$ ${Math.abs(balance).toFixed(0)}`;
+    if (goalsProgressEl) goalsProgressEl.textContent = `${goalsProgress.toFixed(0)}%`;
+    if (weekScoreEl) weekScoreEl.textContent = weekScore;
     
     updateRecentActivity();
 }
 
 function updateRecentActivity() {
     const container = document.getElementById('recentActivity');
+    if (!container) return;
+    
     const activities = [];
     
     // Últimas tarefas
@@ -897,20 +1473,17 @@ function updateRecentActivity() {
 
 // Carregar todos os dados na interface
 function loadAllData() {
-    // Carregar tarefas
-    userData.tasks.forEach(addTaskToBoard);
+    renderAllTasks();
     
-    // Carregar transações
-    userData.transactions.forEach(addTransactionToList);
-    updateFinancialDisplay();
-    
-    // Carregar metas
-    if (userData.goals.length > 0) {
-        document.getElementById('goalsList').innerHTML = '';
-        userData.goals.forEach(addGoalToList);
+    // Renderizar transações se a lista existe
+    const transactionsList = document.getElementById('transactionsList');
+    if (transactionsList) {
+        transactionsList.innerHTML = '';
+        userData.transactions.forEach(addTransactionToList);
     }
     
-    // Carregar equipe
+    updateFinancialDisplay();
+    renderAllGoals();
     loadTeamMembers();
 }
 
@@ -970,38 +1543,11 @@ function addDemoData() {
         },
         {
             id: idCounters.transaction++,
-            type: 'income',
-            description: 'Freelance - Design de logo',
-            amount: 800.00,
-            category: 'freelance',
-            date: new Date(Date.now() - 172800000).toISOString(),
-            userId: currentUser.email
-        },
-        {
-            id: idCounters.transaction++,
             type: 'expense',
             description: 'Supermercado - Compras da semana',
             amount: 320.50,
             category: 'food',
             date: new Date(Date.now() - 3600000).toISOString(),
-            userId: currentUser.email
-        },
-        {
-            id: idCounters.transaction++,
-            type: 'expense',
-            description: 'Combustível',
-            amount: 120.00,
-            category: 'transport',
-            date: new Date(Date.now() - 7200000).toISOString(),
-            userId: currentUser.email
-        },
-        {
-            id: idCounters.transaction++,
-            type: 'expense',
-            description: 'Netflix - Assinatura mensal',
-            amount: 29.90,
-            category: 'entertainment',
-            date: new Date(Date.now() - 259200000).toISOString(),
             userId: currentUser.email
         }
     ];
@@ -1019,30 +1565,6 @@ function addDemoData() {
             progress: 0,
             createdAt: new Date(Date.now() - 604800000).toISOString(),
             userId: currentUser.email
-        },
-        {
-            id: idCounters.goal++,
-            name: 'Aprender inglês fluente',
-            type: 'personal',
-            amount: null,
-            deadline: '2025-09-30',
-            description: 'Conseguir conversar fluentemente em inglês para oportunidades de trabalho',
-            currentAmount: 0,
-            progress: 35,
-            createdAt: new Date(Date.now() - 1209600000).toISOString(),
-            userId: currentUser.email
-        },
-        {
-            id: idCounters.goal++,
-            name: 'Viagem para Europa',
-            type: 'financial',
-            amount: 8000.00,
-            deadline: '2025-11-15',
-            description: 'Realizar sonho de conhecer Paris, Roma e Barcelona',
-            currentAmount: 1850.00,
-            progress: 0,
-            createdAt: new Date(Date.now() - 432000000).toISOString(),
-            userId: currentUser.email
         }
     ];
 
@@ -1052,23 +1574,9 @@ function addDemoData() {
     userData.goals.push(...demoGoals);
 
     // Recarregar interface
-    clearInterface();
     loadAllData();
     updateDashboard();
     saveData();
-}
-
-function clearInterface() {
-    // Limpar tarefas
-    document.getElementById('todo-column').innerHTML = '';
-    document.getElementById('progress-column').innerHTML = '';
-    document.getElementById('done-column').innerHTML = '';
-    
-    // Limpar transações
-    document.getElementById('transactionsList').innerHTML = '';
-    
-    // Limpar metas
-    document.getElementById('goalsList').innerHTML = '';
 }
 
 // Funções utilitárias
@@ -1121,6 +1629,11 @@ function getCategoryText(category) {
 // Sistema de notificações e alertas
 function showAlert(message, type = 'success') {
     const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        console.log(`Alert: ${message}`);
+        return;
+    }
+    
     const alert = document.createElement('div');
     alert.className = `alert alert-${type}`;
     alert.textContent = message;
@@ -1129,31 +1642,54 @@ function showAlert(message, type = 'success') {
     alertContainer.appendChild(alert);
     
     setTimeout(() => {
-        alert.remove();
+        if (alert.parentNode) alert.remove();
     }, 5000);
 }
 
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        padding: 16px 24px;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        z-index: 1001;
+        background: ${type === 'success' ? 'linear-gradient(135deg, #4caf50, #66bb6a)' : 'linear-gradient(135deg, #f44336, #ef5350)'};
+        animation: slideInRight 0.4s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    `;
     
+    notification.textContent = message;
     document.body.appendChild(notification);
     
     setTimeout(() => {
-        notification.remove();
+        if (notification.parentNode) notification.remove();
     }, 4000);
 }
 
 function showCelebration(emoji) {
     const celebration = document.createElement('div');
     celebration.className = 'celebration';
+    celebration.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 4em;
+        z-index: 1002;
+        animation: celebrate 1s ease;
+        pointer-events: none;
+    `;
     celebration.textContent = emoji;
     
     document.body.appendChild(celebration);
     
     setTimeout(() => {
-        celebration.remove();
+        if (celebration.parentNode) celebration.remove();
     }, 1000);
 }
 
@@ -1165,7 +1701,9 @@ function saveData() {
         // Salvar dados globais
         const globalData = {
             users: users,
-            currentUser: currentUser
+            currentUser: currentUser,
+            userData: userData,
+            idCounters: idCounters
         };
         localStorage.setItem('lifemanager_data', JSON.stringify(globalData));
         
@@ -1182,214 +1720,491 @@ function saveData() {
     }
 }
 
-// Sistema de backup e importação
-function exportUserData() {
-    if (!currentUser) return;
+// Adicionar estilos CSS necessários
+function addRequiredStyles() {
+    if (document.getElementById('lifemanager-styles')) return;
     
-    const exportData = {
-        user: {
-            name: currentUser.name,
-            email: currentUser.email,
-            plan: currentUser.plan
-        },
-        data: userData,
-        exportDate: new Date().toISOString(),
-        version: '1.0'
-    };
-    
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileName = `lifecontrol-backup-${currentUser.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileName);
-    linkElement.click();
-    
-    showNotification('Backup exportado com sucesso! 📥');
-}
-
-function importUserData(event) {
-    const file = event.target.files[0];
-    if (file && currentUser) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const importData = JSON.parse(e.target.result);
-                
-                if (importData.data && importData.version) {
-                    // Confirmar importação
-                    if (confirm(`Importar dados de backup?\n\nIsso substituirá todos os seus dados atuais.\n\nData do backup: ${new Date(importData.exportDate).toLocaleDateString('pt-BR')}`)) {
-                        userData = importData.data;
-                        
-                        // Recarregar interface
-                        clearInterface();
-                        loadAllData();
-                        updateDashboard();
-                        saveData();
-                        
-                        showNotification('Dados importados com sucesso! 📤');
-                    }
-                } else {
-                    throw new Error('Formato de arquivo inválido');
-                }
-            } catch (error) {
-                showNotification('Erro ao importar arquivo. Verifique se é um backup válido.', 'error');
-            }
-        };
-        reader.readAsText(file);
-    }
-}
-
-// Funcionalidades extras
-function addBackupButtons() {
-    const backupDiv = document.createElement('div');
-    backupDiv.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 999;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    `;
-    
-    backupDiv.innerHTML = `
-        <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 16px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2);">
-            <button onclick="exportUserData()" style="width: 100%; margin-bottom: 8px; padding: 8px 16px; background: linear-gradient(135deg, #4caf50, #66bb6a); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85em;">
-                📥 Backup
-            </button>
-            <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importUserData(event)">
-            <button onclick="document.getElementById('importFileInput').click()" style="width: 100%; padding: 8px 16px; background: linear-gradient(135deg, #2196f3, #42a5f5); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85em;">
-                📤 Restaurar
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(backupDiv);
-}
-
-function showDailyTip() {
-    const tips = [
-        "💡 Use Ctrl+N para criar tarefas rapidamente!",
-        "📊 Revise seu dashboard diariamente para manter o foco",
-        "💰 Registre gastos na hora - não deixe acumular!",
-        "🎯 Defina metas pequenas e alcançáveis para manter a motivação",
-        "⚡ Complete pelo menos uma tarefa importante por dia",
-        "📱 Use o sistema pelo celular - é super prático!",
-        "🔄 Faça backup dos seus dados regularmente",
-        "👥 Convite pessoas para colaborar em projetos",
-        "📈 Comemore suas conquistas - você merece!",
-        "🎨 Personalize o sistema da forma que funciona melhor para você"
-    ];
-    
-    const randomTip = tips[Math.floor(Math.random() * tips.length)];
-    
-    setTimeout(() => {
-        if (Math.random() < 0.3) { // 30% de chance de mostrar dica
-            showNotification(randomTip);
+    const style = document.createElement('style');
+    style.id = 'lifemanager-styles';
+    style.textContent = `
+        /* Estilos dos modais */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
         }
-    }, 5000);
-}
-
-// Modal de upgrade para Pro
-function showUpgradeModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-            <div style="text-align: center; padding: 20px;">
-                <div style="font-size: 4em; margin-bottom: 20px;">⭐</div>
-                <h2 style="margin-bottom: 16px; color: #333;">Upgrade para Pro</h2>
-                <p style="color: #666; margin-bottom: 32px; font-size: 1.1em;">
-                    Desbloqueie recursos avançados e organize sua vida sem limites
-                </p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 32px;">
-                    <div style="text-align: left;">
-                        <h4 style="color: #333; margin-bottom: 12px;">🚀 Recursos Pro</h4>
-                        <ul style="color: #666; line-height: 1.8;">
-                            <li>✅ Equipes ilimitadas</li>
-                            <li>📊 Relatórios avançados</li>
-                            <li>🔄 Sincronização automática</li>
-                            <li>📱 App mobile dedicado</li>
-                            <li>🛡️ Backup na nuvem</li>
-                            <li>🎯 Metas avançadas</li>
-                        </ul>
-                    </div>
-                    <div style="text-align: left;">
-                        <h4 style="color: #333; margin-bottom: 12px;">💎 Exclusivo Pro</h4>
-                        <ul style="color: #666; line-height: 1.8;">
-                            <li>🤖 Assistente IA</li>
-                            <li>📈 Analytics preditivos</li>
-                            <li>🔗 Integrações avançadas</li>
-                            <li>💬 Suporte prioritário</li>
-                            <li>🎨 Personalização total</li>
-                            <li>📤 Export ilimitado</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 24px; border-radius: 16px; margin-bottom: 24px;">
-                    <h3 style="margin-bottom: 8px;">Apenas R$ 19,90/mês</h3>
-                    <p style="opacity: 0.9; margin: 0;">ou R$ 199,90/ano (2 meses grátis!)</p>
-                </div>
-                
-                <div style="display: flex; gap: 12px; justify-content: center;">
-                    <button class="btn" onclick="simulateUpgrade(); this.parentElement.parentElement.parentElement.parentElement.remove();">
-                        Fazer Upgrade Agora
-                    </button>
-                    <button class="btn-secondary" onclick="this.parentElement.parentElement.parentElement.parentElement.remove();" style="background: #95a5a6; color: white; border: none; padding: 14px 28px; border-radius: 12px; cursor: pointer; font-weight: 700;">
-                        Continuar Grátis
-                    </button>
-                </div>
-                
-                <p style="color: #999; font-size: 0.9em; margin-top: 16px;">
-                    💳 Pagamento seguro • ❌ Cancele quando quiser • 🔒 Seus dados protegidos
-                </p>
-            </div>
-        </div>
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #667eea;
+        }
+        
+        /* Estilos dos botões e formulários */
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.6);
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.95em;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e8eaed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+            font-weight: 500;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        /* Estilos das tarefas */
+        .task-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            cursor: grab;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+        
+        .task-card.dragging {
+            opacity: 0.6;
+            transform: rotate(2deg) scale(1.05);
+            z-index: 1000;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .task-card:active {
+            cursor: grabbing;
+        }
+        
+        /* Melhorias nos status buttons */
+        .status-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .status-btn:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .status-btn:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .task-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.05em;
+        }
+        
+        .task-description {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .task-priority {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .priority-high { 
+            background: linear-gradient(135deg, #ffebee, #fce4ec); 
+            color: #c62828; 
+            border: 1px solid #ffcdd2;
+        }
+        
+        .priority-medium { 
+            background: linear-gradient(135deg, #fff3e0, #fce4ec); 
+            color: #ef6c00; 
+            border: 1px solid #ffcc02;
+        }
+        
+        .priority-low { 
+            background: linear-gradient(135deg, #e8f5e8, #f1f8e9); 
+            color: #2e7d32; 
+            border: 1px solid #c8e6c9;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .task-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #2196f3, #21cbf3);
+            color: white;
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #f44336, #ff5722);
+            color: white;
+        }
+        
+        .task-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Estilos das colunas Kanban */
+        .kanban-column {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 24px;
+            min-height: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .column-header {
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+        
+        #todo-column { min-height: 400px; }
+        #progress-column { min-height: 400px; }
+        #done-column { min-height: 400px; }
+        
+        /* Estilos das transações */
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .transaction-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .transaction-income { 
+            border-left: 4px solid #4caf50; 
+        }
+        
+        .transaction-expense { 
+            border-left: 4px solid #f44336; 
+        }
+        
+        /* Estilos das metas */
+        .goal-item {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .goal-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .goal-progress {
+            background: #f0f0f0;
+            border-radius: 12px;
+            height: 12px;
+            overflow: hidden;
+            margin: 16px 0;
+            position: relative;
+        }
+        
+        .goal-progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+            border-radius: 12px;
+            transition: width 0.6s ease;
+            position: relative;
+        }
+        
+        /* Alertas */
+        .alert {
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Animações */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes celebrate {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        
+        @keyframes upgradeSuccess {
+            0% { 
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+            20% { 
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 1;
+            }
+            80% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% { 
+                transform: translate(-50%, -50%) scale(0.9);
+                opacity: 0;
+            }
+        }
+        
+        /* Melhorias nas colunas Kanban */
+        .kanban-column {
+            transition: all 0.3s ease;
+        }
+        
+        .kanban-column.drag-over {
+            background: rgba(102, 126, 234, 0.2) !important;
+            border: 2px dashed #667eea !important;
+            transform: scale(1.02);
+        }
+        
+        /* Layout fixes */
+        body {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        body.loaded {
+            opacity: 1;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 10% auto;
+                padding: 24px;
+                width: 95%;
+            }
+            
+            .task-card {
+                padding: 16px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
     `;
     
-    document.body.appendChild(modal);
+    document.head.appendChild(style);
 }
 
-function simulateUpgrade() {
-    currentUser.plan = 'pro';
-    document.getElementById('userPlan').textContent = 'Pro';
-    saveData();
-    showCelebration('⭐');
-    showNotification('Parabéns! Você agora é Pro! Aproveite todos os recursos! ⭐');
-}
+// Inicializar estilos quando documento carregar
+document.addEventListener('DOMContentLoaded', function() {
+    addRequiredStyles();
+    
+    // Aplicar classe loaded após um pequeno delay
+    setTimeout(() => {
+        document.body.classList.add('loaded');
+        document.body.style.opacity = '1';
+    }, 200);
+});
 
-// Funcionalidades de debug
-if (window.location.search.includes('debug=true')) {
-    window.lifeManagerDebug = {
-        currentUser: () => currentUser,
-        userData: () => userData,
-        clearData: () => {
-            localStorage.clear();
-            location.reload();
-        },
-        addDemoData: addDemoData,
-        exportData: exportUserData,
-        stats: () => ({
-            tasks: userData.tasks.length,
-            transactions: userData.transactions.length,
-            goals: userData.goals.length,
-            teamMembers: userData.teamMembers.length
-        })
-    };
-    console.log('🔧 Debug mode ativado. Use window.lifeManagerDebug');
-}
-
-// Inicialização final - verificar upgrade
-setTimeout(() => {
-    if (currentUser && currentUser.plan === 'free' && Math.random() < 0.2) {
-        setTimeout(showUpgradeModal, 30000); // Mostrar upgrade após 30s
+// Garantir que modals sejam recriados quando necessário
+document.addEventListener('click', function(e) {
+    // Se clicou em um botão que deveria abrir modal mas modal não existe
+    const onclick = e.target.getAttribute('onclick');
+    if (onclick && onclick.includes('openModal') && !document.querySelector('.modal')) {
+        createModals();
+        
+        // Reexecutar o clique após criar os modals
+        setTimeout(() => {
+            const modalId = onclick.match(/openModal\('(.+?)'\)/)?.[1];
+            if (modalId) openModal(modalId);
+        }, 100);
     }
-}, 5000);
+});
+
+// Funções globais para compatibilidade
+window.switchAuthTab = function(tab) {
+    document.querySelectorAll('.auth-tab').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(tab + 'Form').classList.add('active');
+};
+
+// Exportar funções principais para o escopo global
+window.switchTab = switchTab;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.logout = logout;
+window.editTask = editTask;
+window.deleteTask = deleteTask;
+window.updateGoalProgress = updateGoalProgress;
+window.deleteGoal = deleteGoal;
+window.showWelcomeDemo = showWelcomeDemo;
+window.toggleGoalFields = toggleGoalFields;
+window.allowDrop = allowDrop;
+window.drop = drop;
+window.changeTaskStatus = changeTaskStatus;
+window.exportUserData = exportUserData; // Backup
+window.importUserData = importUserData; // Restore
+window.showUpgradeModal = showUpgradeModal; // Upgrade Pro
+window.simulateUpgrade = simulateUpgrade; // Simular upgrade
+
+console.log('✅ LifeManager carregado e pronto para uso!');

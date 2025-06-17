@@ -368,7 +368,7 @@ window.Profile = {
                 ` : `
                     <div style="margin-bottom: 20px;">
                         <div style="font-size: 1.1em; font-weight: 600; margin-bottom: 8px; color: #333;">
-                            Desbloqueie todo o potencial do LifeManager!
+                            Desbloqueie todo o potencial do Visionfin!
                         </div>
                         <div style="font-size: 0.9em; color: #666;">
                             Upgrade para Pro e tenha acesso a recursos exclusivos
@@ -640,7 +640,7 @@ window.Profile = {
                     <p>O gerenciamento de cobrança estará disponível em breve.</p>
                     <p style="font-size: 0.9em; margin-top: 16px;">
                         Para cancelar ou alterar seu plano, entre em contato: <br>
-                        <strong>suporte@lifecontrol.com</strong>
+                        <strong>suporte@visionfin.com</strong>
                     </p>
                 </div>
             </div>
@@ -687,7 +687,7 @@ window.Profile = {
     clearCache() {
         if (confirm('Isso limpará dados temporários e cache. Continuar?')) {
             // Limpar cache do navegador (simulado)
-            localStorage.removeItem('lifemanager_cache');
+            localStorage.removeItem('Visionfin_cache');
             
             Notifications.show('Cache limpo com sucesso! 🧹', 'success');
         }

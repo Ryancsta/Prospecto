@@ -4,7 +4,7 @@
  */
 
 window.Storage = {
-    prefix: 'lifemanager_',
+    prefix: 'visionfin_',
     
     // Inicializar sistema de storage
     initialize() {
@@ -102,20 +102,20 @@ window.Storage = {
     
     // Salvar dados do usuário atual
     saveUserData() {
-        if (!LifeManager.currentUser) return false;
+        if (!visionfin.currentUser) return false;
         
         const userData = {
-            tasks: LifeManager.userData.tasks || [],
-            transactions: LifeManager.userData.transactions || [],
-            goals: LifeManager.userData.goals || [],
-            teamMembers: LifeManager.userData.teamMembers || [],
-            profile: LifeManager.userData.profile || {},
-            achievements: LifeManager.userData.achievements || [],
-            settings: LifeManager.userData.settings || {},
+            tasks: visionfin.userData.tasks || [],
+            transactions: visionfin.userData.transactions || [],
+            goals: visionfin.userData.goals || [],
+            teamMembers: visionfin.userData.teamMembers || [],
+            profile: visionfin.userData.profile || {},
+            achievements: visionfin.userData.achievements || [],
+            settings: visionfin.userData.settings || {},
             lastSaved: new Date().toISOString()
         };
         
-        const userKey = `user_${LifeManager.currentUser.email}`;
+        const userKey = `user_${visionfin.currentUser.email}`;
         return this.setItem(userKey, userData);
     },
     
@@ -148,7 +148,7 @@ window.Storage = {
     
     // Salvar usuários
     saveUsers() {
-        return this.setItem('users', LifeManager.users);
+        return this.setItem('users', visionfin.users);
     },
     
     // Carregar usuários
@@ -168,7 +168,7 @@ window.Storage = {
     
     // Salvar contadores de ID
     saveIdCounters() {
-        return this.setItem('idCounters', LifeManager.idCounters);
+        return this.setItem('idCounters', visionfin.idCounters);
     },
     
     // Carregar contadores de ID
@@ -193,20 +193,20 @@ window.Storage = {
     
     // Exportar todos os dados do usuário
     exportUserData() {
-        if (!LifeManager.currentUser) return null;
+        if (!visionfin.currentUser) return null;
         
         const exportData = {
             user: {
-                name: LifeManager.currentUser.name,
-                email: LifeManager.currentUser.email,
-                plan: LifeManager.currentUser.plan,
-                createdAt: LifeManager.currentUser.createdAt
+                name: visionfin.currentUser.name,
+                email: visionfin.currentUser.email,
+                plan: visionfin.currentUser.plan,
+                createdAt: visionfin.currentUser.createdAt
             },
-            data: LifeManager.userData,
+            data: visionfin.userData,
             metadata: {
                 exportDate: new Date().toISOString(),
                 version: Config.version,
-                source: 'LifeManager'
+                source: 'Visionfin'
             }
         };
         
@@ -229,8 +229,8 @@ window.Storage = {
             }
             
             // Atualizar dados na memória
-            LifeManager.userData = {
-                ...LifeManager.userData,
+            Visionfin.userData = {
+                ...Visionfin.userData,
                 ...importData.data
             };
             
@@ -311,7 +311,7 @@ window.Storage = {
         if (!Config.storage.autoSave) return;
         
         setInterval(() => {
-            if (LifeManager.currentUser) {
+            if (Visionfin.currentUser) {
                 this.saveUserData();
                 this.saveIdCounters();
                 
@@ -427,4 +427,4 @@ window.Storage = {
 };
 
 // Expor globalmente
-window.LifeManagerStorage = window.Storage;
+window.VisionfinStorage = window.Storage;

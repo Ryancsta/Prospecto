@@ -2,22 +2,22 @@
  * LifeManager - Configurações Globais
  */
 
-window.LifeManagerConfig = {
+window.VisionfinConfig = {
     version: '1.0.0',
     buildDate: '2025-01-15',
     
     // Configurações da aplicação
     app: {
-        name: 'LifeManager',
+        name: 'Visionfin',
         description: 'Organize sua vida, alcance suas metas',
-        author: 'LifeManager Team',
-        website: 'https://lifecontrol.com',
-        support: 'suporte@lifecontrol.com'
+        author: 'Visionfin Team',
+        website: 'https://visionfin.com',
+        support: 'suporte@visionfin.com'
     },
     
     // Configurações de usuário demo
     demo: {
-        email: 'demo@lifecontrol.com',
+        email: 'demo@visionfin.com',
         password: 'demo123',
         name: 'Usuário Demo',
         plan: 'pro'
@@ -165,7 +165,7 @@ window.LifeManagerConfig = {
             },
             'early_adopter': {
                 title: 'Pioneiro',
-                description: 'Um dos primeiros usuários do LifeManager',
+                description: 'Um dos primeiros usuários do Visionfin',
                 icon: '🚀',
                 points: 200
             }
@@ -174,7 +174,7 @@ window.LifeManagerConfig = {
     
     // Configurações de storage
     storage: {
-        prefix: 'lifemanager_',
+        prefix: 'visionfin_',
         compression: false,
         encryption: false,
         autoSave: true,
@@ -185,7 +185,7 @@ window.LifeManagerConfig = {
     backup: {
         enabled: true,
         autoExport: false,
-        filename: 'lifecontrol-backup-{name}-{date}.json',
+        filename: 'visionfin-backup-{name}-{date}.json',
         includeSettings: true,
         compression: true
     },
@@ -200,7 +200,7 @@ window.LifeManagerConfig = {
     
     // URLs e endpoints (para futuras integrações)
     api: {
-        baseUrl: 'https://api.lifecontrol.com',
+        baseUrl: 'https://api.visionfin.com',
         version: 'v1',
         timeout: 10000,
         endpoints: {
@@ -282,7 +282,7 @@ window.LifeManagerConfig = {
 };
 
 // Fazer configurações disponíveis globalmente
-window.Config = window.LifeManagerConfig;
+window.Config = window.VisionfinConfig;
 
 // Função para obter configuração aninhada
 window.Config.get = function(path, defaultValue = null) {

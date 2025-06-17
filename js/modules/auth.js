@@ -224,7 +224,7 @@ window.Auth = {
     
     // Inicializar usuário demo
     setupDemoUser() {
-        const demoEmail = 'demo@lifecontrol.com';
+        const demoEmail = 'demo@visionfin.com';
         users[demoEmail] = {
             name: 'Usuário Demo',
             email: demoEmail,
